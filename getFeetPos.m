@@ -1,7 +1,9 @@
-function footPos = getFeetPos(state)
+function feetPos = getFeetPos(state)
     % Feet positions
-    footPos = getFfoot(state);
-    footPos = [footPos; getRfoot(state)];
+    % return 2 feet's position [front_x; front_y; rear_x; rear_y]
+
+    feetPos = getFfoot(state);
+    feetPos = [footPos; getRfoot(state)];
 end
 
 function rear_foot = getRfoot(state)
@@ -23,7 +25,6 @@ function front_foot = getFfoot(state)
     a = 0.15; b = 0.5; l = 0.2;
     cmb = [x; y];
     mid_lower_body_link = cmb + [a / 2 * sin(theta); -a / 2 * cos(theta)];
-    
     joint1 = mid_lower_body_link + [b / 2 * cos(theta); b / 2 * sin(theta)];
     joint2 = joint1 + [-l * cos(theta + q1); -l * sin(theta + q1)];
 

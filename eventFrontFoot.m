@@ -1,20 +1,22 @@
-function [value,isterminal,direction] = eventFrontFoot(t,x)
+function [value, isterminal, direction] = eventFrontFootGround(~, x)
     global h_ground %unit m
-    foots = getFeetPos(x) %front back
-    ground_ind = ceil(foots(1)/0.2)
-    try 
-        value = foots(2)-h_ground(ground_ind)
+    feet_pos = getFeetPos(x); %front back
+    ground_index = ceil(feet_pos(1) / 0.2);
+
+    try
+        value = feet_pos(2) - h_ground(ground_index);
     catch
-        value = foots(2)
+        value = feet_pos(2);
     end
-    isterminal = 1;   % stop the integration
-    direction = 0;   % negative direction -1
+
+    isterminal = 1; % stop the integration
+    direction = 0; % negative direction -1
 end
 
-% samll test case
+% small test case
 
 % global h_ground
 % h_ground = [0.1,0.2,0.5,0.5,0.6]
 % t = 0.1
 % x = [0;0.4;0.1;pi/4;pi/2;pi/4;pi/2]
-% eventFrontFoot(t,x)
+% eventFrontFootGround(t,x)
