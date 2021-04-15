@@ -1,4 +1,4 @@
-function [value, isterminal, direction] = eventRearFootGround(~, x)
+function [value, isterminal, direction] = eventRFootGround(~, x)
     global h_ground %unit m
     feet_pos = getFeetPos(x); %front back
     ground_index = ceil(feet_pos(3) / 0.2);
