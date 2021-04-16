@@ -1,5 +1,7 @@
 # AME599 Final Project
 
+*Please check Wiki pages first*
+
 ### simulator
 
 
