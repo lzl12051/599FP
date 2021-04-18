@@ -12,7 +12,7 @@ function funcs = dynaEq
     % some other useful matrix
     funcs.Dq = @Dq;
     funcs.iDq = @iDq;
-    funcs.Nqda = @Nqdq;
+    funcs.Nqdq = @Nqdq;
 end
 
 function jac_rear_foot = jacRfoot(state)
