@@ -1,11 +1,12 @@
-global h_ground tout yout err_flags t_end g
+clear;
+global h_ground tout yout err_flags t_end g;
 
 g = 9.81; t_end = 2;
 % Generate the ground hight data every 0.2m
 % it's all 0 since we are running on a flat land
 h_ground = zeros(1, ceil(30/0.2)); % unit: m
 
-t = 0.1; t1 = pi / 4; t2 = pi / 2; t3 = pi / 4; t4 = pi / 2;
+t = 0.1; t1 = pi / 4; t2 = pi / 2; t3 = pi / 4; t4 = pi /you 2;
 ini_cond = [0; 0.5; t; t1; t2; t3; t4; 0; 0; 0; 0; 0; 0; 0];
 
 dropAndBalance(ini_cond);
