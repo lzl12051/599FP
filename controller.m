@@ -72,7 +72,7 @@ function u = QpBalance(t, x)
 end
 
 function u = MpcFrontSwing(t, x)
-    global g
+    global g H2 A_c2 B_c2 Kpx Kpy Kdx Kdy
     l = 0.2; m = 0.25; mb = 8; a = 0.15; b = 0.5;
 
     X_com = x(1); Y_com = x(2); theta = x(3); theta_1 = x(4); theta_2 = x(5); theta_3 = x(6); theta_4 = x(7);
@@ -143,13 +143,13 @@ function u = MpcFrontSwing(t, x)
     u_ = quadprog(H2, f2, A_c2, B_c2, Aeq, beq);
 
     % control the swing of front foot
-    % XXX change t_now -> t_swing-start
+    % XXX change t_now -> t_swing_start
     global t_swing_start
     % desired x position and x velocity
     % XXX X position control not implemented
 
     % BUG maybe xfd = 0; dxfd = P1x;
-    xfd =P1x ; dxfd = 0;
+    xfd = P1x; dxfd = P1x + 0.1;
     % calculate the desired y position and y velocity
     if t - t_swing_start < 0.1
         dyfd = 0.1/0.1;
@@ -163,14 +163,17 @@ function u = MpcFrontSwing(t, x)
     % XXX move this to dynaEq
     P1xv = X_dot_com + (theta_dot_1 + theta_dot_2 + theta_dot) * sin(theta_1 + theta_2 + theta) / 5 + (theta_dot_1 + theta_dot) * sin(theta_1 + theta) / 5 - theta_dot * sin(theta) / 4 + (3 * theta_dot * cos(theta)) / 40;
     P1yv = Y_dot_com - (theta_dot_1 + theta_dot_2 + theta_dot) * cos(theta_1 + theta_2 + theta) / 5 - (theta_dot_1 + theta_dot) * cos(theta_1 + theta) / 5 + (3 * theta_dot * sin(theta)) / 40 + theta_dot * cos(theta) / 4;
-    
+
     % front foot PD controller
-    u_front = [Kpx * (xfd - P1x) + Kdx * (dxfd - P1xv); Kpy * (yfd - P1y) + Kdy * (dyfd - P1yv)];
+    uf1 = Kpx * (xfd - P1x) + Kdx * (dxfd - P1xv);
+    uf2 = Kpy * (yfd - P1y) + Kdy * (dyfd - P1yv);
+    u_front = [uf1, uf2];
     % Rotation matrix world->body
     theta = x(3);
     R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
     Fc_front = [u_front(1); u_front(2)]
-    Fc_back = [u_(71); u_(72)]
+    % XXX using magic here
+    Fc_back = [u_(71); u_(72)] % [70;90]; %
 
     % Jacobian from hip to foot
     % NOTE jac(hip->foot);

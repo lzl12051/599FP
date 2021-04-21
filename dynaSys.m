@@ -3,6 +3,7 @@ function funcs = dynaSys
     funcs.fall = @fall;
     funcs.rearStance = @rearStance;
     funcs.doubleStanceQP = @doubleStanceQP;
+    funcs.FrontSwingMpc = @FrontSwingMpc;
 end
 
 function dx = fall(t, x)
@@ -64,7 +65,7 @@ function dx = doubleStanceQP(t, x)
     % t_QP = t
 end
 
-function dx = sys_dynamics_MPC_front_swing(t, x)
+function dx = FrontSwingMpc(t, x)
     eq = dynaEq;
     ctrl = controller;
 

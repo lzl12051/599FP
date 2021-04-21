@@ -53,7 +53,8 @@ end
 
 function [value, isterminal, direction] = eventDoubleStaceQP(t, x)
     % XXX should not use time to decide when to stop ODE
-    value = 2 - t; % detect height = 0
+    % value = 1 - t; % detect height = 0
+    value = abs(x(9))>0.01;
     isterminal = 1; % stop the integration
     direction = -1; % negative direction
 end
