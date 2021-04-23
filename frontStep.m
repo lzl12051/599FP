@@ -3,10 +3,10 @@ function frontStep
     global yout tout H2 t_end A_c2 B_c2 Kpx Kpy Kdx Kdy t_swing_start
     dySys = dynaSys;
     % FIXME here needs some work
-    Q2 = [1, 1, 0.1, 1, 1, 1, 1];
-    R2 = [1, 1];
-    R2list = repmat(Q2, 1, 10);
-    Q2list = repmat(R2, 1, 10);
+    Q2 = [5000, 5000, 3000, 500, 500, 1, 0];
+    R2 = [1e-10, 1e-10];
+    R2list = repmat(R2, 1, 10);
+    Q2list = repmat(Q2, 1, 10);
 
     H2 = [Q2list, R2list];
     H2 = diag(H2);
@@ -19,13 +19,13 @@ function frontStep
             zeros(1, 70), zeros(1, 2 * (i - 1)), 0, -1, zeros(1, 2 * (9 - i + 1));
             zeros(1, 70), zeros(1, 2 * (i - 1)), 1, -0.5, zeros(1, 2 * (9 - i + 1));
             zeros(1, 70), zeros(1, 2 * (i - 1)), -1, -0.5, zeros(1, 2 * (9 - i + 1)); ];
-        B_c2 = [B_c2; 500; -100; 0; 0];
+        B_c2 = [B_c2; 500; -10; 0; 0];
     end
 
     Kpx = 1;
-    Kdx = 10;
-    Kpy = 1000;
-    Kdy = 10;
+    Kdx = 1;
+    Kpy = 4;
+    Kdy = 4;
 
     t_start = tout(end)
     t_swing_start = t_start;
@@ -36,18 +36,18 @@ function frontStep
     yout = [yout; y(2:nt, :)];
     tstart = t(nt);
 
-    % keep balance after step
+    % % keep balance after step
 
-    impMapping = impactMapping;
-    impMapping.frontMapping();
+    % impMapping = impactMapping;
+    % impMapping.frontMapping();
 
-    % Double stance with QP controller to balance the robot
-    ode_opt = odeset('Events', @eventDoubleStaceQP);
-    [t, y, te, ye, ie] = ode45(@dySys.doubleStanceQP, [t_start t_end], yout(end, :), ode_opt);
-    nt = length(t);
-    tout = [tout; t(2:nt)];
-    yout = [yout; y(2:nt, :)];
-    %tstart = t(nt);
+    % % Double stance with QP controller to balance the robot
+    % ode_opt = odeset('Events', @eventDoubleStaceQP);
+    % [t, y, te, ye, ie] = ode45(@dySys.doubleStanceQP, [t_start t_end], yout(end, :), ode_opt);
+    % nt = length(t);
+    % tout = [tout; t(2:nt)];
+    % yout = [yout; y(2:nt, :)];
+    % %tstart = t(nt);
 
 end
 

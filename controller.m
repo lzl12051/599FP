@@ -88,6 +88,33 @@ function u = MpcFrontSwing(t, x)
 
     I_b = 1/12 * mb * (a^2 + b^2); % I_b = 0.1817
 
+    % control the swing of front foot
+    % XXX change t_now -> t_swing_start
+    global t_swing_start
+    % desired x position and x velocity
+    % XXX X position control not implemented
+
+    % BUG maybe xfd = 0; dxfd = P1x;
+    xfd = P1x; dxfd = 0; % P1x + 0.1;
+    % calculate the desired y position and y velocity
+    if t - t_swing_start < 0.1
+        dyfd = 0.1/0.1;
+        yfd = (t - t_swing_start) * dyfd;
+    else
+        dyfd = -0.1/0.1;
+        yfd = 0.1 + (t - t_swing_start - 0.1) * dyfd;
+    end
+
+    % front v
+    % XXX move this to dynaEq
+    P1xv = X_dot_com + (theta_dot_1 + theta_dot_2 + theta_dot) * sin(theta_1 + theta_2 + theta) / 5 + (theta_dot_1 + theta_dot) * sin(theta_1 + theta) / 5 - theta_dot * sin(theta) / 4 + (3 * theta_dot * cos(theta)) / 40;
+    P1yv = Y_dot_com - (theta_dot_1 + theta_dot_2 + theta_dot) * cos(theta_1 + theta_2 + theta) / 5 - (theta_dot_1 + theta_dot) * cos(theta_1 + theta) / 5 + (3 * theta_dot * sin(theta)) / 40 + theta_dot * cos(theta) / 4;
+
+    % front foot PD controller
+    uf1 = Kpx * (xfd - P1x) + Kdx * (dxfd - P1xv);
+    uf2 = Kpy * (yfd - P1y) + Kdy * (dyfd - P1yv);
+    u_front = [uf1, uf2];
+
     % MPC for balance the body by rear foot
     % Lecture 14 A^hat
     % 0     0     0     1     0     0     0
@@ -98,7 +125,9 @@ function u = MpcFrontSwing(t, x)
     % 0     0     0     0     0     0     0
     % 0     0     0     0     0     0     0
     A_hat = [zeros(3, 3), eye(3), zeros(3, 1); zeros(4, 7)];
-    A_hat(5, 7) = -1;
+    A_hat(4, 7) = -u_front(1) / (mb * g);
+    A_hat(5, 7) = -u_front(2) / (mb * g) - 1;
+    A_hat(6, 7) = u_front(1) * (P1y - Y_com) / I_b - u_front(2) * (P1x - X_com) / I_b;
 
     % B^hat
     % [                 0,                 0]
@@ -142,32 +171,6 @@ function u = MpcFrontSwing(t, x)
     % u_ = quadprog(H,f,A_c2,B_c2,Aeq,beq);
     u_ = quadprog(H2, f2, A_c2, B_c2, Aeq, beq);
 
-    % control the swing of front foot
-    % XXX change t_now -> t_swing_start
-    global t_swing_start
-    % desired x position and x velocity
-    % XXX X position control not implemented
-
-    % BUG maybe xfd = 0; dxfd = P1x;
-    xfd = P1x; dxfd = P1x + 0.1;
-    % calculate the desired y position and y velocity
-    if t - t_swing_start < 0.1
-        dyfd = 0.1/0.1;
-        yfd = (t - t_swing_start) * dyfd;
-    else
-        dyfd = -0.1/0.1;
-        yfd = 0.1 + (t - t_swing_start - 0.1) * dyfd;
-    end
-
-    % front v
-    % XXX move this to dynaEq
-    P1xv = X_dot_com + (theta_dot_1 + theta_dot_2 + theta_dot) * sin(theta_1 + theta_2 + theta) / 5 + (theta_dot_1 + theta_dot) * sin(theta_1 + theta) / 5 - theta_dot * sin(theta) / 4 + (3 * theta_dot * cos(theta)) / 40;
-    P1yv = Y_dot_com - (theta_dot_1 + theta_dot_2 + theta_dot) * cos(theta_1 + theta_2 + theta) / 5 - (theta_dot_1 + theta_dot) * cos(theta_1 + theta) / 5 + (3 * theta_dot * sin(theta)) / 40 + theta_dot * cos(theta) / 4;
-
-    % front foot PD controller
-    uf1 = Kpx * (xfd - P1x) + Kdx * (dxfd - P1xv);
-    uf2 = Kpy * (yfd - P1y) + Kdy * (dyfd - P1yv);
-    u_front = [uf1, uf2];
     % Rotation matrix world->body
     theta = x(3);
     R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
