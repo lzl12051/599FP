@@ -4,6 +4,7 @@ function funcs = dynaSys
     funcs.rearStance = @rearStance;
     funcs.doubleStanceQP = @doubleStanceQP;
     funcs.FrontSwingMpc = @FrontSwingMpc;
+    funcs.RearSwingMpc = @RearSwingMpc;
 end
 
 function dx = fall(t, x)
@@ -77,8 +78,8 @@ function dx = FrontSwingMpc(t, x)
     J_foot_back_ = eq.jacRfoot(x);
     dJ_foot_back_ = eq.jacDotRfoot(x);
 
-    J_foot_front_ = eq.jacFfoot(x);
-    dJ_foot_front_ = eq.jacDotFfoot(x);
+    %  J_foot_front_ = eq.jacFfoot(x);
+    %  dJ_foot_front_ = eq.jacDotFfoot(x);
 
     Jc_all = J_foot_back_;
     dJc_all = dJ_foot_back_;
@@ -89,4 +90,31 @@ function dx = FrontSwingMpc(t, x)
     ddq = inv(Dq_) * (tau_all + JcFc_ - Nqq_);
     dx = [x(8:14); ddq];
     % t_MPC_front_swing = t
+end
+
+function dx = RearSwingMpc(t,x)
+    eq = dynaEq;
+    ctrl = controller;
+
+    tau_all = ctrl.MpcRearSwing(t, x);
+
+    Dq_ = eq.Dq(x);
+    Nqq_ = eq.Nqdq(x);
+
+    % J_foot_back_ = eq.jacRfoot(x);
+    % dJ_foot_back_ = eq.jacDotRfoot(x);
+
+    J_foot_front_ = eq.jacFfoot(x);
+    dJ_foot_front_ = eq.jacDotFfoot(x);
+
+    Jc_all = J_foot_front_;
+    dJc_all = dJ_foot_front_;
+
+    Fc_ = inv(Jc_all * inv(Dq_) * Jc_all.') * (-dJc_all * x(8:14) - Jc_all * inv(Dq_) * (tau_all - Nqq_));
+    JcFc_ = Jc_all.' * Fc_;
+
+    ddq = inv(Dq_) * (tau_all + JcFc_ - Nqq_);
+    dx = [x(8:14); ddq];
+    % t_MPC_front_swing = t
+
 end

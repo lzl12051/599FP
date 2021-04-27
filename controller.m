@@ -73,9 +73,11 @@ end
 
 function u = MpcFrontSwing(t, x)
     global g H2 A_c2 B_c2 Kpx Kpy Kdx Kdy
+    global params
     l = 0.2; m = 0.25; mb = 8; a = 0.15; b = 0.5;
 
-    X_com = x(1); Y_com = x(2); theta = x(3); theta_1 = x(4); theta_2 = x(5); theta_3 = x(6); theta_4 = x(7);
+    X_com = x(1); Y_com = x(2); theta = x(3); theta_1 = x(4); 
+    theta_2 = x(5); theta_3 = x(6); theta_4 = x(7);
     X_dot_com = x(8); Y_dot_com = x(9); theta_dot = x(10); theta_dot_1 = x(11); theta_dot_2 = x(12); theta_dot_3 = x(13); theta_dot_4 = x(14);
 
     feet_pos = getFeetPos(x);
@@ -94,15 +96,14 @@ function u = MpcFrontSwing(t, x)
     % desired x position and x velocity
     % XXX X position control not implemented
 
-    % BUG maybe xfd = 0; dxfd = P1x;
-    xfd = P1x; dxfd = 0; % P1x + 0.1;
-    % calculate the desired y position and y velocity
-    if t - t_swing_start < 0.1
-        dyfd = 0.1/0.1;
+    xfd = P1x + 2 * params.dt * params.vx; dxfd = 2 * params.vx;
+
+    if t - t_swing_start < params.step_time
+        dyfd = params.high / params.step_time;
         yfd = (t - t_swing_start) * dyfd;
     else
-        dyfd = -0.1/0.1;
-        yfd = 0.1 + (t - t_swing_start - 0.1) * dyfd;
+        dyfd = -params.high / params.step_time;
+        yfd = params.high + (t - t_swing_start - params.step_time) * dyfd;
     end
 
     % front v
@@ -125,9 +126,7 @@ function u = MpcFrontSwing(t, x)
     % 0     0     0     0     0     0     0
     % 0     0     0     0     0     0     0
     A_hat = [zeros(3, 3), eye(3), zeros(3, 1); zeros(4, 7)];
-    A_hat(4, 7) = -u_front(1) / (mb * g);
-    A_hat(5, 7) = -u_front(2) / (mb * g) - 1;
-    A_hat(6, 7) = u_front(1) * (P1y - Y_com) / I_b - u_front(2) * (P1x - X_com) / I_b;
+    A_hat(5, 7) = -1;
 
     % B^hat
     % [                 0,                 0]
@@ -146,8 +145,8 @@ function u = MpcFrontSwing(t, x)
 
     % u
     % [F2x; F2y]
-
-    dt = 0.04;
+    % XXX here just make dt = params.dt, could cause problems
+    dt = params.dt;
     A_mpc = A_hat * dt + eye(7);
     B_mpc = B_hat * dt;
 
@@ -163,8 +162,7 @@ function u = MpcFrontSwing(t, x)
         zeros(7, 7 * 7), -A_mpc, eye(7), zeros(7, 7), zeros(7, 2 * 8), -B_mpc, zeros(7, 2);
         zeros(7, 7 * 8), -A_mpc, eye(7), zeros(7, 2 * 9), -B_mpc];
 
-    xk = [X_com; Y_com - 0.3; theta; X_dot_com; Y_dot_com; theta_dot; g];
-    % XXX check xk or x
+    xk = [X_com - t * params.vx; Y_com - params.stand_h; theta; X_dot_com - params.vx; Y_dot_com; theta_dot; params.g];
     beq = [A_mpc * xk; zeros(7 * 9, 1)];
     % f = zeros(110,1);
     f2 = zeros(70 + 2 * 10, 1);
@@ -175,8 +173,10 @@ function u = MpcFrontSwing(t, x)
     theta = x(3);
     R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
     Fc_front = [u_front(1); u_front(2)]
-    % XXX using magic here
-    Fc_back = [u_(71); u_(72)] % [70;90]; %
+    % XXX try using magic here
+
+    % Fc_back = [-3000*theta+1000*(Y_com - 0.35); -1000*theta+1000*(Y_com - 0.35)]
+    Fc_back = [u_(71); u_(72)]
 
     % Jacobian from hip to foot
     % NOTE jac(hip->foot);
@@ -185,6 +185,102 @@ function u = MpcFrontSwing(t, x)
 
     tau_f = Jc_front' * R' * Fc_front;
     tau_b = -Jc_back' * R' * Fc_back;
+    u = [0; 0; 0; tau_f; tau_b];
+
+end
+
+function u = MpcRearSwing(t, x)
+    global g H2 A_c2 B_c2 Kpx Kpy Kdx Kdy
+    l = 0.2; m = 0.25; mb = 8; a = 0.15; b = 0.5;
+
+    X_com = x(1); Y_com = x(2); theta = x(3); theta_1 = x(4); theta_2 = x(5); theta_3 = x(6); theta_4 = x(7);
+    X_dot_com = x(8); Y_dot_com = x(9); theta_dot = x(10); theta_dot_1 = x(11); theta_dot_2 = x(12); theta_dot_3 = x(13); theta_dot_4 = x(14);
+
+    feet_pos = getFeetPos(x);
+    % front foot
+    P1x = feet_pos(1); %X_com - cos(theta_1 + theta_2 + theta) / 5 - cos(theta_1 + theta) / 5 + cos(theta) / 4 + (3 * sin(theta)) / 40;
+    P1y = feet_pos(2); %Y_com - sin(theta_1 + theta_2 + theta) / 5 - sin(theta_1 + theta) / 5 - (3 * cos(theta)) / 40 + sin(theta) / 4;
+    % rear foot
+    P2x = feet_pos(3); %X_com - cos(theta_3 + theta_4 + theta) / 5 - cos(theta_3 + theta) / 5 - cos(theta) / 4 + (3 * sin(theta)) / 40;
+    P2y = feet_pos(4); %Y_com - sin(theta_3 + theta_4 + theta) / 5 - sin(theta_3 + theta) / 5 - (3 * cos(theta)) / 40 - sin(theta) / 4;
+
+    I_b = 1/12 * mb * (a^2 + b^2); % I_b = 0.1817
+
+    % control the swing of front foot
+    % XXX change t_now -> t_swing_start
+    global t_swing_start
+    % desired x position and x velocity
+    % XXX X position control not implemented
+
+    xfd = P2x + 2 * params.dt * params.vx; dxfd = 2 * params.vx;
+
+    if t - t_swing_start < params.step_time
+        dyfd = params.high / params.step_time;
+        yfd = (t - t_swing_start) * dyfd;
+    else
+        dyfd = -params.high / params.step_time;
+        yfd = params.high + (t - t_swing_start - params.step_time) * dyfd;
+    end
+
+    % front v
+    % XXX move this to dynaEq
+    P2xv = X_dot_com + (theta_dot_3 + theta_dot_4 + theta_dot) * sin(theta_3 + theta_4 + theta) / 5 + (theta_dot_3 + theta_dot) * sin(theta_3 + theta) / 5 - theta_dot * sin(theta) / 4 + (3 * theta_dot * cos(theta)) / 40;
+    P2yv = Y_dot_com - (theta_dot_3 + theta_dot_4 + theta_dot) * cos(theta_3 + theta_4 + theta) / 5 - (theta_dot_3 + theta_dot) * cos(theta_3 + theta) / 5 + (3 * theta_dot * sin(theta)) / 40 + theta_dot * cos(theta) / 4;
+
+    % back foot PD controller
+    uf1 = Kpx * (xfd - P2x) + Kdx * (dxfd - P2xv);
+    uf2 = Kpy * (yfd - P2y) + Kdy * (dyfd - P2yv);
+    u_back = [uf1, uf2];
+
+    A_hat = [zeros(3, 3), eye(3), zeros(3, 1); zeros(4, 7)];
+    A_hat(5, 7) = -1;
+
+    B_hat = [zeros(3, 2);
+        1 / mb, 0;
+        0, 1 / mb;
+        -(P1y - Y_com) / I_b, (P1x - X_com) / I_b;
+        0, 0];
+
+    % u
+    % [F2x; F2y]
+    % XXX here just make dt = params.dt, could cause problems
+    dt = params.dt;
+    A_mpc = A_hat * dt + eye(7);
+    B_mpc = B_hat * dt;
+
+    % Aeq checked 70x90
+    Aeq = [eye(7), zeros(7, 7 * 9), -B_mpc, zeros(7, 2 * 9);
+        -A_mpc, eye(7), zeros(7, 7 * 8), zeros(7, 2), -B_mpc, zeros(7, 2 * 8);
+        zeros(7, 7), -A_mpc, eye(7), zeros(7, 7 * 7), zeros(7, 2 * 2), -B_mpc, zeros(7, 2 * 7);
+        zeros(7, 7 * 2), -A_mpc, eye(7), zeros(7, 7 * 6), zeros(7, 2 * 3), -B_mpc, zeros(7, 2 * 6);
+        zeros(7, 7 * 3), -A_mpc, eye(7), zeros(7, 7 * 5), zeros(7, 2 * 4), -B_mpc, zeros(7, 2 * 5);
+        zeros(7, 7 * 4), -A_mpc, eye(7), zeros(7, 7 * 4), zeros(7, 2 * 5), -B_mpc, zeros(7, 2 * 4);
+        zeros(7, 7 * 5), -A_mpc, eye(7), zeros(7, 7 * 3), zeros(7, 2 * 6), -B_mpc, zeros(7, 2 * 3);
+        zeros(7, 7 * 6), -A_mpc, eye(7), zeros(7, 7 * 2), zeros(7, 2 * 7), -B_mpc, zeros(7, 2 * 2);
+        zeros(7, 7 * 7), -A_mpc, eye(7), zeros(7, 7), zeros(7, 2 * 8), -B_mpc, zeros(7, 2);
+        zeros(7, 7 * 8), -A_mpc, eye(7), zeros(7, 2 * 9), -B_mpc];
+
+    xk = [X_com - t * params.vx; Y_com - params.stand_h; theta; X_dot_com - params.vx; Y_dot_com; theta_dot; params.g];
+    beq = [A_mpc * xk; zeros(7 * 9, 1)];
+
+    f2 = zeros(70 + 2 * 10, 1);
+    u_ = quadprog(H2, f2, A_c2, B_c2, Aeq, beq);
+
+    % Rotation matrix world->body
+    theta = x(3);
+    R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
+    
+    % XXX try using magic here
+    Fc_back = [u_back(1); u_back(2)]
+    Fc_front = [u_(71); u_(72)]
+
+    % Jacobian from hip to foot
+    % NOTE jac(hip->foot);
+    Jc_front = [sin(theta_1 + theta_2) / 5 + sin(theta_1) / 5, sin(theta_1 + theta_2) / 5; -cos(theta_1 + theta_2) / 5 - cos(theta_1) / 5, -cos(theta_1 + theta_2) / 5];
+    Jc_back = [sin(theta_3 + theta_4) / 5 + sin(theta_3) / 5, sin(theta_3 + theta_4) / 5; -cos(theta_3 + theta_4) / 5 - cos(theta_3) / 5, -cos(theta_3 + theta_4) / 5];
+
+    tau_f = -Jc_front' * R' * Fc_front;
+    tau_b = Jc_back' * R' * Fc_back;
     u = [0; 0; 0; tau_f; tau_b];
 
 end

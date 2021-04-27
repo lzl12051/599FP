@@ -1,11 +1,11 @@
 % The robot will swing its front foot
-function frontStep
+function rearStep
     global yout tout H2 t_end A_c2 B_c2 Kpx Kpy Kdx Kdy t_swing_start
 
     dySys = dynaSys;
     % FIXME here needs some work
-    %Q2 = [100, 5000, 1000, 500, 1000, 1, 0];
-    Q2 = [1,5,3,1,1,1,1]
+    %Q2 = [5000, 1000, 5, 50, 50, 5, 0];
+    Q2 = [5000, 1000, 5, 50, 50, 5, 0];
     R2 = [1e-10, 1e-10];
     R2list = repmat(R2, 1, 10);
     Q2list = repmat(Q2, 1, 10);
@@ -28,8 +28,8 @@ function frontStep
 
     t_start = tout(end)
     t_swing_start = t_start;
-    options = odeset('Events', @eventFrontTouchGround);
-    [t, y, te, ye, ie] = ode45(@dySys.FrontSwingMpc, [t_start t_end], yout(end, :), options);
+    options = odeset('Events', @eventRearTouchGround);
+    [t, y, te, ye, ie] = ode45(@dySys.RearSwingMpc, [t_start t_end], yout(end, :), options);
     nt = length(t);
     tout = [tout; t(2:nt)];
     yout = [yout; y(2:nt, :)];
@@ -50,9 +50,9 @@ function frontStep
 
 end
 
-function [value, isterminal, direction] = eventFrontTouchGround(~, x)
+function [value, isterminal, direction] = eventRearTouchGround(~, x)
     feet_pos = getFeetPos(x);
-    value = feet_pos(2); %double(subs(foot_front(2))); % detect height = 0
+    value = feet_pos(4); %double(subs(foot_front(2))); % detect height = 0
     isterminal = 1; % stop the integration
     direction = -1; % negative direction
 end
