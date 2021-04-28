@@ -97,7 +97,8 @@ function u = MpcFrontSwing(t, x)
     % desired x position and x velocity
     % XXX X position control not implemented
 
-    xfd = P1x + 2 * params.dt * params.vx; dxfd = 2 * params.vx;
+    xfd = P1x + 2 * params.dt * params.vx;
+    dxfd = 2 * params.vx;
 
     if t - t_swing_start < params.step_time
         dyfd = params.high / params.step_time;
@@ -214,7 +215,8 @@ function u = MpcRearSwing(t, x)
     % desired x position and x velocity
     % XXX X position control not implemented
 
-    xfd = P2x + 2 * params.dt * params.vx; dxfd = 2 * params.vx;
+    xfd = P2x + 2 * params.dt * params.vx;
+    dxfd = 2 * params.vx;
 
     if t - t_swing_start < params.step_time
         dyfd = params.high / params.step_time;
