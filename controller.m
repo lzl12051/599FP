@@ -1,6 +1,7 @@
 function funcs = controller
     funcs.QpBalance = @QpBalance;
     funcs.MpcFrontSwing = @MpcFrontSwing;
+    funcs.MpcRearSwing = @MpcRearSwing;
 end
 
 function u = QpBalance(t, x)
@@ -172,11 +173,11 @@ function u = MpcFrontSwing(t, x)
     % Rotation matrix world->body
     theta = x(3);
     R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
-    Fc_front = [u_front(1); u_front(2)]
+    Fc_front = [u_front(1); u_front(2)];
     % XXX try using magic here
 
     % Fc_back = [-3000*theta+1000*(Y_com - 0.35); -1000*theta+1000*(Y_com - 0.35)]
-    Fc_back = [u_(71); u_(72)]
+    Fc_back = [u_(71); u_(72)];
 
     % Jacobian from hip to foot
     % NOTE jac(hip->foot);
@@ -191,6 +192,7 @@ end
 
 function u = MpcRearSwing(t, x)
     global g H2 A_c2 B_c2 Kpx Kpy Kdx Kdy
+    global params
     l = 0.2; m = 0.25; mb = 8; a = 0.15; b = 0.5;
 
     X_com = x(1); Y_com = x(2); theta = x(3); theta_1 = x(4); theta_2 = x(5); theta_3 = x(6); theta_4 = x(7);
@@ -271,8 +273,8 @@ function u = MpcRearSwing(t, x)
     R = double([cos(theta), -sin(theta); sin(theta), cos(theta)]);
     
     % XXX try using magic here
-    Fc_back = [u_back(1); u_back(2)]
-    Fc_front = [u_(71); u_(72)]
+    Fc_back = [u_back(1); u_back(2)];
+    Fc_front = [u_(71); u_(72)];
 
     % Jacobian from hip to foot
     % NOTE jac(hip->foot);

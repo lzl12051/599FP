@@ -24,9 +24,11 @@ end
 
 function jac_front_foot = jacFfoot(state)
     % get the numerical value of states
-    [theta, q1, q2] = deal( state(3), state(4), state(5));
+    % [theta, q1, q2] = deal( state(3), state(4), state(5));
     % compute the numerical jacobian matrix of front foot
-    jac_front_foot = [1, 0, (3 * cos(theta)) / 40 - sin(theta) / 4 + sin(q1 + q2 + theta) / 5 + sin(q1 + theta) / 5, sin(q1 + q2 + theta) / 5 + sin(q1 + theta) / 5, sin(q1 + q2 + theta) / 5, 0, 0; 0, 1, cos(theta) / 4 + (3 * sin(theta)) / 40 - cos(q1 + q2 + theta) / 5 - cos(q1 + theta) / 5, - cos(q1 + q2 + theta) / 5 - cos(q1 + theta) / 5, -cos(q1 + q2 + theta) / 5, 0, 0];
+    % jac_front_foot = [1, 0, (3 * cos(theta)) / 40 - sin(theta) / 4 + sin(q1 + q2 + theta) / 5 + sin(q1 + theta) / 5, sin(q1 + q2 + theta) / 5 + sin(q1 + theta) / 5, sin(q1 + q2 + theta) / 5, 0, 0; 0, 1, cos(theta) / 4 + (3 * sin(theta)) / 40 - cos(q1 + q2 + theta) / 5 - cos(q1 + theta) / 5, - cos(q1 + q2 + theta) / 5 - cos(q1 + theta) / 5, -cos(q1 + q2 + theta) / 5, 0, 0];
+    [theta, theta_1, theta_2] = deal( state(3), state(4), state(5));
+    jac_front_foot = [1,0,sin(theta_1+theta_2+theta)/5+sin(theta_1+theta)/5+(3*cos(theta))/40-sin(theta)/4,sin(theta_1+theta_2+theta)/5+sin(theta_1+theta)/5,sin(theta_1+theta_2+theta)/5,0,0;0,1,cos(theta)/4-cos(theta_1+theta)/5-cos(theta_1+theta_2+theta)/5+(3*sin(theta))/40,-cos(theta_1+theta_2+theta)/5-cos(theta_1+theta)/5,-cos(theta_1+theta_2+theta)/5,0,0];
 end
 
 function jc_dot_rear_foot = jacDotRfoot(state)
@@ -40,11 +42,14 @@ end
 
 function jc_dot_front_foot = jacDotFfoot(state)
     % get the numerical value of states
-    [theta, q1, q2] = deal(state(3), state(4), state(5));
-    [theta_dot, q_dot_1, q_dot_2] = deal(state(10), state(11), state(12));
+    % [theta, q1, q2] = deal(state(3), state(4), state(5));
+    % [theta_dot, q_dot_1, q_dot_2] = deal(state(10), state(11), state(12));
     % compute the numerical jacobian matrix dot of front foot
-    jc_dot_front_foot = [0, 0, (cos(q1 + theta) * (q_dot_1 + theta_dot)) / 5 - (3 * theta_dot * sin(theta)) / 40 - (theta_dot * cos(theta)) / 4 + (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (cos(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, 0, 0;
-                    0, 0, (3 * theta_dot * cos(theta)) / 40 - (theta_dot * sin(theta)) / 4 + (sin(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (sin(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, 0, 0];
+    % jc_dot_front_foot = [0, 0, (cos(q1 + theta) * (q_dot_1 + theta_dot)) / 5 - (3 * theta_dot * sin(theta)) / 40 - (theta_dot * cos(theta)) / 4 + (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (cos(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (cos(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, 0, 0;
+    %                 0, 0, (3 * theta_dot * cos(theta)) / 40 - (theta_dot * sin(theta)) / 4 + (sin(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (sin(q1 + theta) * (q_dot_1 + theta_dot)) / 5 + (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, (sin(q1 + q2 + theta) * (q_dot_1 + q_dot_2 + theta_dot)) / 5, 0, 0];
+    [theta, theta_1, theta_2] = deal(state(3), state(4), state(5));
+    [theta_dot, theta_dot_1, theta_dot_2] = deal(state(10), state(11), state(12));
+    jc_dot_front_foot = [0,0,(cos(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5+(cos(theta_1+theta)*(theta_dot+theta_dot_1))/5-(theta_dot*cos(theta))/4-(3*theta_dot*sin(theta))/40,(cos(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5+(cos(theta_1+theta)*(theta_dot+theta_dot_1))/5,(cos(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5,0,0;0,0,(sin(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5+(sin(theta_1+theta)*(theta_dot+theta_dot_1))/5+(3*theta_dot*cos(theta))/40-(theta_dot*sin(theta))/4,(sin(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5+(sin(theta_1+theta)*(theta_dot+theta_dot_1))/5,(sin(theta_1+theta_2+theta)*(theta_dot+theta_dot_1+theta_dot_2))/5,0,0];
 end
 
 function Dq_matrix = Dq(state)

@@ -1,20 +1,19 @@
 clear;
-global h_ground tout yout err_flags t_end g;
+global h_ground tout yout err_flags t_end g Q2
 global params
 
-
 % foot params here
-params.Kpx = 200; % change
-params.Kdx = 200;
-params.Kpy = 200;
-params.Kdy = 200;
-
+params.Kpx = 1000;
+params.Kdx = 1000;
+params.Kpy = 1000;
+params.Kdy = 1000;
+params.foot_body = 4;
+Q2 = [5000, 2000, 5, 50, 50, 5, 0];
 params.dt = 0.04;
 params.vx = 0.5;
 params.step_time = 0.1;
 % the step hight
 params.high = 0.1;
-
 
 g = 9.81; t_end = 5;
 params.g = g
@@ -35,14 +34,13 @@ params.stand_h = Yb;
 yout = [ini_cond.']; % this is 1
 tout = [0];
 
-frontStep();
-% % If x coordinate of the body's CoM have not reach the goal
-% while yout(end, 1) <= 30
-%     % TODO Let the robot keep walking on the ground until x>30m
-
-%     frontStep();
-%     rearStep();
-% end
+% If x coordinate of the body's CoM have not reach the goal
+while yout(end, 1) <= 0.5
+    % TODO Let the robot keep walking on the ground until x>30m
+    rearStep();
+    frontStep();
+    
+end
 
 animate(tout, yout, 1/60, 'Videos/Task1_test.avi');
 fprintf('Task 1 Score: %3.2f\n', calcScore);

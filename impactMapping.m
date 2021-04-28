@@ -33,5 +33,18 @@ end
 function doubleMapping
     global yout
     % XXX Not implemented
+    global Dq J_foot_front J_foot_back
+    eq = dynaEq;
+    x_after = yout(end,:);
+
+
+    dq_f = x_after(8:14).';
+    Dq_ = eq.Dq(x_after);
+    J_foot_back_ = eq.jacRfoot(x_after);
+    J_foot_front_ = eq.jacFfoot(x_after);
+    J_all = [J_foot_back_; J_foot_front_];
+
+    d_after = dq_f - inv(Dq_) * J_all.' * inv(J_all * inv(Dq_) * J_all.') * J_all * dq_f;
+    yout(end, 8:14) = d_after;
 
 end

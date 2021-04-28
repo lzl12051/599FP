@@ -1,11 +1,14 @@
 % The robot will swing its front foot
 function frontStep
-    global yout tout H2 t_end A_c2 B_c2 Kpx Kpy Kdx Kdy t_swing_start
+    global yout tout H2 t_end A_c2 B_c2 Kpx Kpy Kdx Kdy t_swing_start Q2
+    if t_end == tout(end)
+        disp("ODE err")
+        return
+    end
 
     dySys = dynaSys;
     % FIXME here needs some work
-    %Q2 = [100, 5000, 1000, 500, 1000, 1, 0];
-    Q2 = [1,5,3,1,1,1,1]
+    % Q2 = [5000, 3000, 5, 50, 50, 5, 0];
     R2 = [1e-10, 1e-10];
     R2list = repmat(R2, 1, 10);
     Q2list = repmat(Q2, 1, 10);
@@ -33,12 +36,12 @@ function frontStep
     nt = length(t);
     tout = [tout; t(2:nt)];
     yout = [yout; y(2:nt, :)];
-    tstart = t(nt);
+    % tstart = t(nt);
 
-    % % keep balance after step
+    % keep balance after step
 
-    % impMapping = impactMapping;
-    % impMapping.frontMapping();
+    impMapping = impactMapping;
+    impMapping.frontMapping();
 
     % % Double stance with QP controller to balance the robot
     % ode_opt = odeset('Events', @eventDoubleStaceQP);
